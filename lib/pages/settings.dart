@@ -11,11 +11,17 @@ class Settings extends StatefulWidget { // Changed to StatefulWidget
 class _SettingsPageState extends State<Settings> {
   // State variables for various settings
   bool _darkModeEnabled = false;
-  String _selectedAppLanguage = 'English'; // Default language
-  String _userName = 'User'; // Will load this if we want to display/change
-
-  final List<String> _availableLanguages = ['English']; // Example languages
-  final String _appVersion = '1.0.0'; // Example app version
+  final List<String> _fieldOptions = ['Reefscape', 'Crescendo', 'Charged Up', 'Rapid Reacts']; // Default language
+  final List<String> _motorOptions = ['NEO', 'CIM', 'KrakenX60'];
+  String _selectedField = 'Reefscape';
+  String _selectedMotor = 'NEO';
+  double _robotMass = 74.1;
+  double _robotLength = 0.6;
+  double _robotWidth = 0.5;
+  double _robotRatio = 8;
+  double _bumperWidth = 0.15;
+  double _wheelRadius = 0.048;
+  final String _appVersion = '1.0.0'; 
 
   @override
   void initState() {
@@ -28,8 +34,8 @@ class _SettingsPageState extends State<Settings> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _darkModeEnabled = prefs.getBool('darkMode') ?? false;
-      _selectedAppLanguage = prefs.getString('appLanguage') ?? 'English';
-      _userName = prefs.getString('userName') ?? 'User'; // Load existing username
+      _selectedField = prefs.getString('fieldType') ?? 'Reefscape';
+      _selectedMotor = prefs.getString('motorType') ?? 'NEO'; 
     });
   }
 
@@ -38,8 +44,12 @@ class _SettingsPageState extends State<Settings> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     if (value is bool) {
       await prefs.setBool(key, value);
-    } else if (value is String) {
+    } 
+    else if (value is String) {
       await prefs.setString(key, value);
+    }
+    else if(value is double){
+      await prefs.setDouble(key, value);
     }
     // You can add more types (int, double) if needed for other settings
   }
@@ -52,14 +62,20 @@ class _SettingsPageState extends State<Settings> {
     // Reset local state variables to their default values after clearing
     setState(() {
       _darkModeEnabled = false;
-      _selectedAppLanguage = 'English';
-      _userName = 'User';
+      _selectedField = _fieldOptions[0];
+      _selectedMotor = _motorOptions[0];
+      _robotMass = 74.1;
+      _robotLength = 0.6;
+      _robotWidth = 0.5;
+      _robotRatio = 8;
+      _bumperWidth = 0.15;
+      _wheelRadius = 0.048;
       // Reset any other settings variables you might add to their defaults
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('All app data has been cleared!'),
+        content: Text('Data reset'),
         backgroundColor: Colors.green,
       ),
     );
@@ -73,9 +89,9 @@ class _SettingsPageState extends State<Settings> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Data Clear'),
+          title: const Text('Confirm Data Reset'),
           content: const Text(
-              'Are you sure you want to clear all your progress, XP, and settings? This action cannot be undone.'),
+              'Are you sure you want to clear all of your data? All of your config settings will be restored to their defaults.'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -97,18 +113,40 @@ class _SettingsPageState extends State<Settings> {
     );
   }
 
+  String getUnit(int tab){
+    String a;
+    if(tab == 0){
+      a = 'KG';
+      return a;
+    }
+    else{
+      a = 'M';
+      return a;
+    }
+  } 
+
   // Dialog for changing username
-  void _showChangeUsernameDialog() {
-    TextEditingController usernameController = TextEditingController(text: _userName);
+  void _showSettingsDialog(int action) {
+    TextEditingController massController = TextEditingController(text: _robotMass.toString());
+    TextEditingController r_LengthController = TextEditingController(text: _robotLength.toString());
+    TextEditingController r_WidthController = TextEditingController(text: _robotWidth.toString());
+    TextEditingController b_WidthController = TextEditingController(text: _bumperWidth.toString());
+    TextEditingController ratioController = TextEditingController(text: _robotRatio.toString());
+    TextEditingController radiusController = TextEditingController(text: _wheelRadius.toString());
+
+    List<TextEditingController> settingsController = [massController, r_LengthController, r_WidthController, b_WidthController, ratioController, radiusController];
+    List<String> sharedPrefs = ['botMass', 'botLength', 'botWidth', 'botBumper', 'botRatio', 'botWheels'];
+    String unit = getUnit(action);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Change Username'),
+          title: Text('Enter Value ($unit)'),
           content: TextField(
-            controller: usernameController,
+            controller: settingsController[action],
             decoration: const InputDecoration(
-              hintText: 'Enter new username',
+              hintText: 'aifjiajf',
               border: OutlineInputBorder(),
             ),
           ),
@@ -121,18 +159,31 @@ class _SettingsPageState extends State<Settings> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (usernameController.text.isNotEmpty) {
-                  await _saveSetting('userName', usernameController.text);
+                if (settingsController[action].text.isNotEmpty) {
+                  double? parsedValue = double.tryParse(settingsController[action].text);
+                  if (parsedValue != null) {
+                    await _saveSetting(sharedPrefs[action], parsedValue);
+                    setState(() {
+                      switch (action) {
+                        case 0: _robotMass = parsedValue; break;
+                        case 1: _robotLength = parsedValue; break;
+                        case 2: _robotWidth = parsedValue; break;
+                        case 3: _bumperWidth = parsedValue; break;
+                        case 4: _robotRatio = parsedValue; break;
+                        case 5: _wheelRadius = parsedValue; break;
+                      }
+                    });
+                  }
                   setState(() {
-                    _userName = usernameController.text; // Update UI immediately
+                    // _selectedMotor = settingsController[action].text; // Update UI immediately
                   });
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Username updated successfully!')),
+                    const SnackBar(content: Text('Data updated successfully!')),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Username cannot be empty!')),
+                    const SnackBar(content: Text('Cannot be empty!')),
                   );
                 }
               },
@@ -165,7 +216,7 @@ class _SettingsPageState extends State<Settings> {
           child: ListView(
             padding: const EdgeInsets.all(25.0), // Generous padding for content
             children: [
-              // --- General Preferences Section ---
+              //General app preferences
               _buildSectionHeader('General Preferences'),
               Card(
                 elevation: 2,
@@ -191,21 +242,21 @@ class _SettingsPageState extends State<Settings> {
                       ),
                       const Divider(indent: 16, endIndent: 16), // Visual separator
                       ListTile(
-                        leading: const Icon(Icons.language),
-                        title: const Text('App Language', style: TextStyle(fontSize: 18)),
-                        subtitle: Text('Current: $_selectedAppLanguage'),
+                        leading: const Icon(Icons.gamepad),
+                        title: const Text('Field Preference', style: TextStyle(fontSize: 18)),
+                        subtitle: Text('Current: $_selectedField'),
                         trailing: DropdownButton<String>(
-                          value: _selectedAppLanguage,
+                          value: _selectedField,
                           onChanged: (String? newValue) {
                             if (newValue != null) {
                               setState(() {
-                                _selectedAppLanguage = newValue;
+                                _selectedField = newValue;
                               });
-                              _saveSetting('appLanguage', newValue);
+                              _saveSetting('fieldType', newValue);
                               // For full localization, you'd update locale here
                             }
                           },
-                          items: _availableLanguages.map<DropdownMenuItem<String>>((String value) {
+                          items: _fieldOptions.map<DropdownMenuItem<String>>((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
                               child: Text(value, style: const TextStyle(fontSize: 16)),
@@ -218,8 +269,8 @@ class _SettingsPageState extends State<Settings> {
                 ),
               ),
 
-              // --- Account Management Section ---
-              _buildSectionHeader('Account Management'),
+              //Robot preferences
+              _buildSectionHeader('Robot Configuration'),
               Card(
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 15.0),
@@ -227,25 +278,91 @@ class _SettingsPageState extends State<Settings> {
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.person_outline),
-                      title: const Text('Change Username', style: TextStyle(fontSize: 18)),
-                      subtitle: Text('Current: $_userName'),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        _showChangeUsernameDialog(); // Call the dialog for username change
-                      },
+                      leading: const Icon(Icons.bolt_outlined),
+                      title: const Text('Motors', style: TextStyle(fontSize: 18)),
+                      subtitle: Text('Current: $_selectedMotor'),
+                      trailing: DropdownButton<String>(
+                        value: _selectedMotor,
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedMotor = newValue;
+                            });
+                            _saveSetting('motorType', newValue);
+                          }
+                        },
+                        items: _motorOptions.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value, style: const TextStyle(fontSize: 16)),
+                          );
+                        }).toList(),
+                      ),
                     ),
+
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.lock_outline),
-                      title: const Text('Change Password', style: TextStyle(fontSize: 18)),
-                      subtitle: const Text('Update your login password'),
+                      leading: const Icon(Icons.add_box_outlined),
+                      title: const Text('Robot Mass', style: TextStyle(fontSize: 18)),
+                      subtitle: Text('Mass: $_robotMass'),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
-                        // Placeholder for change password logic (e.g., navigate to a new page)
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Change Password functionality coming soon!')),
-                        );
+                          _showSettingsDialog(0);
+                      },
+                    ),
+
+                    const Divider(indent: 16, endIndent: 16),
+                    ListTile(
+                      leading: const Icon(Icons.add_box_outlined),
+                      title: const Text('Robot Length', style: TextStyle(fontSize: 18)),
+                      subtitle: Text('Length: $_robotLength'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                          _showSettingsDialog(1);
+                      },
+                    ),
+
+                    const Divider(indent: 16, endIndent: 16),
+                    ListTile(
+                      leading: const Icon(Icons.add_box_outlined),
+                      title: const Text('Robot Width', style: TextStyle(fontSize: 18)),
+                      subtitle: Text('Width: $_robotWidth'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                          _showSettingsDialog(2);
+                      },
+                    ),
+
+                    const Divider(indent: 16, endIndent: 16),
+                    ListTile(
+                      leading: const Icon(Icons.add_box_outlined),
+                      title: const Text('Bumper Width', style: TextStyle(fontSize: 18)),
+                      subtitle: Text('Width: $_bumperWidth'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                          _showSettingsDialog(3);
+                      },
+                    ),
+
+                    const Divider(indent: 16, endIndent: 16),
+                    ListTile(
+                      leading: const Icon(Icons.add_box_outlined),
+                      title: const Text('Gear Ratio', style: TextStyle(fontSize: 18)),
+                      subtitle: Text('Gear Ratio: $_robotRatio'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                          _showSettingsDialog(4);
+                      },
+                    ),
+
+                    const Divider(indent: 16, endIndent: 16),
+                    ListTile(
+                      leading: const Icon(Icons.add_box_outlined),
+                      title: const Text('Wheel Radius', style: TextStyle(fontSize: 18)),
+                      subtitle: Text('Radius: $_wheelRadius'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                          _showSettingsDialog(5);
                       },
                     ),
                   ],
@@ -260,8 +377,8 @@ class _SettingsPageState extends State<Settings> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   leading: const Icon(Icons.delete_forever, color: Colors.red),
-                  title: const Text('Clear All App Data', style: TextStyle(fontSize: 18, color: Colors.red)),
-                  subtitle: const Text('Resets all progress, XP, and settings to default.'),
+                  title: const Text('Reset', style: TextStyle(fontSize: 18, color: Colors.red)),
+                  subtitle: const Text('Resets all app data and robot configuration settings.'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: _showClearDataConfirmation, // Call the confirmation dialog
                 ),
@@ -283,12 +400,12 @@ class _SettingsPageState extends State<Settings> {
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
                       leading: const Icon(Icons.description),
-                      title: const Text('Privacy Policy', style: TextStyle(fontSize: 18)),
+                      title: const Text('Documentation', style: TextStyle(fontSize: 18)),
                       trailing: const Icon(Icons.open_in_new),
                       onTap: () {
                         // Placeholder for opening privacy policy in a browser or showing in-app
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Opening Privacy Policy (placeholder)!')),
+                          const SnackBar(content: Text('Opening Tankplanner.ca')),
                         );
                       },
                     ),
