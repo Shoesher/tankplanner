@@ -109,7 +109,7 @@ Widget _buildSideBar(BuildContext context) {
         ),
         ListTile(
           leading: const Icon(Icons.book_outlined, color: Colors.white),
-          title: const Text('Documentation', style: TextStyle(color: Colors.white)),
+          title: const Text('Docs', style: TextStyle(color: Colors.white)),
           onTap: () {
             // Add navigator to documentation page
           },

@@ -199,6 +199,7 @@ class _SettingsPageState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         title: const Text('Settings',
            style: TextStyle(
@@ -211,6 +212,7 @@ class _SettingsPageState extends State<Settings> {
         elevation: 0,
       ),
       body: Center(
+
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 700), // Max width for content on desktop
           child: ListView(
@@ -219,6 +221,7 @@ class _SettingsPageState extends State<Settings> {
               //General app preferences
               _buildSectionHeader('General Preferences'),
               Card(
+                color: const Color(0xFF2C2C2C),
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 15.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -227,8 +230,8 @@ class _SettingsPageState extends State<Settings> {
                   child: Column(
                     children: [
                       SwitchListTile(
-                        title: const Text('Dark Mode', style: TextStyle(fontSize: 18)),
-                        subtitle: const Text('Toggle between light and dark themes'),
+                        title: const Text('Dark Mode', style: TextStyle(fontSize: 18, color: Colors.white)),
+                        subtitle: const Text('Toggle between light and dark themes', style: TextStyle(color: Colors.grey)),
                         value: _darkModeEnabled,
                         onChanged: (bool value) {
                           setState(() {
@@ -237,14 +240,14 @@ class _SettingsPageState extends State<Settings> {
                           _saveSetting('darkMode', value);
                           // For a full app, you would notify MaterialApp to change theme here
                         },
-                        secondary: const Icon(Icons.dark_mode_outlined),
+                        secondary: const Icon(Icons.dark_mode_outlined, color: Colors.white),
                         activeColor: Colors.blueAccent,
                       ),
                       const Divider(indent: 16, endIndent: 16), // Visual separator
                       ListTile(
-                        leading: const Icon(Icons.gamepad),
-                        title: const Text('Field Preference', style: TextStyle(fontSize: 18)),
-                        subtitle: Text('Current: $_selectedField'),
+                        leading: const Icon(Icons.gamepad, color: Colors.white),
+                        title: const Text('Field Preference', style: TextStyle(fontSize: 18, color: Colors.white)),
+                        subtitle: Text('Current: $_selectedField', style: TextStyle(color: Colors.grey)),
                         trailing: DropdownButton<String>(
                           value: _selectedField,
                           onChanged: (String? newValue) {
@@ -259,7 +262,7 @@ class _SettingsPageState extends State<Settings> {
                           items: _fieldOptions.map<DropdownMenuItem<String>>((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
-                              child: Text(value, style: const TextStyle(fontSize: 16)),
+                              child: Text(value, style: const TextStyle(fontSize: 16, color: Colors.white)),
                             );
                           }).toList(),
                         ),
@@ -272,15 +275,16 @@ class _SettingsPageState extends State<Settings> {
               //Robot preferences
               _buildSectionHeader('Robot Configuration'),
               Card(
+                color: const Color(0xFF2C2C2C),
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 15.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.bolt_outlined),
-                      title: const Text('Motors', style: TextStyle(fontSize: 18)),
-                      subtitle: Text('Current: $_selectedMotor'),
+                      leading: const Icon(Icons.bolt_outlined, color: Colors.white),
+                      title: const Text('Motors', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      subtitle: Text('Current: $_selectedMotor', style: TextStyle(color: Colors.grey)),
                       trailing: DropdownButton<String>(
                         value: _selectedMotor,
                         onChanged: (String? newValue) {
@@ -294,7 +298,7 @@ class _SettingsPageState extends State<Settings> {
                         items: _motorOptions.map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(value, style: const TextStyle(fontSize: 16)),
+                            child: Text(value, style: const TextStyle(fontSize: 16, color: Colors.white)),
                           );
                         }).toList(),
                       ),
@@ -302,9 +306,9 @@ class _SettingsPageState extends State<Settings> {
 
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.add_box_outlined),
-                      title: const Text('Robot Mass', style: TextStyle(fontSize: 18)),
-                      subtitle: Text('Mass: $_robotMass'),
+                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
+                      title: const Text('Robot Mass', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      subtitle: Text('Mass: $_robotMass', style: TextStyle(color: Colors.grey)),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                           _showSettingsDialog(0);
@@ -313,9 +317,9 @@ class _SettingsPageState extends State<Settings> {
 
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.add_box_outlined),
-                      title: const Text('Robot Length', style: TextStyle(fontSize: 18)),
-                      subtitle: Text('Length: $_robotLength'),
+                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
+                      title: const Text('Robot Length', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      subtitle: Text('Length: $_robotLength', style: TextStyle(color: Colors.grey)),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                           _showSettingsDialog(1);
@@ -324,9 +328,9 @@ class _SettingsPageState extends State<Settings> {
 
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.add_box_outlined),
-                      title: const Text('Robot Width', style: TextStyle(fontSize: 18)),
-                      subtitle: Text('Width: $_robotWidth'),
+                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
+                      title: const Text('Robot Width', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      subtitle: Text('Width: $_robotWidth', style: TextStyle(color: Colors.grey)),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                           _showSettingsDialog(2);
@@ -335,9 +339,9 @@ class _SettingsPageState extends State<Settings> {
 
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.add_box_outlined),
-                      title: const Text('Bumper Width', style: TextStyle(fontSize: 18)),
-                      subtitle: Text('Width: $_bumperWidth'),
+                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
+                      title: const Text('Bumper Width', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      subtitle: Text('Width: $_bumperWidth', style: TextStyle(color: Colors.grey)),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                           _showSettingsDialog(3);
@@ -346,9 +350,9 @@ class _SettingsPageState extends State<Settings> {
 
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.add_box_outlined),
-                      title: const Text('Gear Ratio', style: TextStyle(fontSize: 18)),
-                      subtitle: Text('Gear Ratio: $_robotRatio'),
+                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
+                      title: const Text('Gear Ratio', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      subtitle: Text('Gear Ratio: $_robotRatio', style: TextStyle(color: Colors.grey)),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                           _showSettingsDialog(4);
@@ -357,9 +361,9 @@ class _SettingsPageState extends State<Settings> {
 
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.add_box_outlined),
-                      title: const Text('Wheel Radius', style: TextStyle(fontSize: 18)),
-                      subtitle: Text('Radius: $_wheelRadius'),
+                      leading: const Icon(Icons.add_box_outlined, color: Colors.white),
+                      title: const Text('Wheel Radius', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      subtitle: Text('Radius: $_wheelRadius', style: TextStyle(color: Colors.grey)),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                           _showSettingsDialog(5);
@@ -372,13 +376,14 @@ class _SettingsPageState extends State<Settings> {
               // --- Data & Storage Section ---
               _buildSectionHeader('Data & Storage'),
               Card(
+                color: const Color(0xFF2C2C2C),
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 15.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   leading: const Icon(Icons.delete_forever, color: Colors.red),
                   title: const Text('Reset', style: TextStyle(fontSize: 18, color: Colors.red)),
-                  subtitle: const Text('Resets all app data and robot configuration settings.'),
+                  subtitle: const Text('Resets all app data and robot configuration settings.', style: TextStyle(color: Colors.grey)),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: _showClearDataConfirmation, // Call the confirmation dialog
                 ),
@@ -387,20 +392,21 @@ class _SettingsPageState extends State<Settings> {
               // --- About Section ---
               _buildSectionHeader('About Tankplanner'),
               Card(
+                color: const Color(0xFF2C2C2C),
                 elevation: 2,
                 margin: const EdgeInsets.only(bottom: 15.0),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.info_outline),
-                      title: const Text('App Version', style: TextStyle(fontSize: 18)),
-                      subtitle: Text(_appVersion),
+                      leading: const Icon(Icons.info_outline, color: Colors.white),
+                      title: const Text('App Version', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      subtitle: Text(_appVersion, style: TextStyle(color: Colors.grey)),
                     ),
                     const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.description),
-                      title: const Text('Documentation', style: TextStyle(fontSize: 18)),
+                      leading: const Icon(Icons.description, color: Colors.white),
+                      title: const Text('Documentation', style: TextStyle(fontSize: 18, color: Colors.white)),
                       trailing: const Icon(Icons.open_in_new),
                       onTap: () {
                         // Placeholder for opening privacy policy in a browser or showing in-app
@@ -411,8 +417,8 @@ class _SettingsPageState extends State<Settings> {
                     ),
                      const Divider(indent: 16, endIndent: 16),
                     ListTile(
-                      leading: const Icon(Icons.gavel),
-                      title: const Text('Licenses', style: TextStyle(fontSize: 18)),
+                      leading: const Icon(Icons.gavel, color: Colors.white),
+                      title: const Text('Licenses', style: TextStyle(fontSize: 18, color: Colors.white)),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                         showLicensePage(context: context, applicationName: 'Native App');
