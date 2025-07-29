@@ -147,17 +147,105 @@ Widget _buildDashboard() {
           IconButton(
             icon: const Icon(Icons.folder_open_outlined, color: Colors.white, size: 50),
             onPressed: () {
-              // Add a new widget of a folder
+              _buildDraggable(false);
             },
           ),
           IconButton(
             icon: const Icon(Icons.add_circle_outlined, color: Colors.white, size: 50),
             onPressed: () {
-              // Add a new widget of a path file
+              _buildDraggable(true);
             },
           ),
         ],
       ),
     ),
   );
+}
+
+Widget _buildDraggable(bool isPath) {
+  int idle = 0;
+  int drag = 1;
+  int og = 2;
+  if(isPath){
+    return Draggable(
+      feedback: _buildPath(drag),
+      childWhenDragging: _buildPath(og),
+      child: _buildPath(idle),
+    );
+  }
+  else{
+    return Draggable(
+      feedback: _buildFolder(drag),
+      childWhenDragging: _buildFolder(og),
+      child: _buildFolder(idle),
+    );
+  }
+}
+
+Widget _buildPath(int state) {
+  switch(state){
+    case 0: //Idle path 
+      return Container(
+        width: 200.0, 
+        height: 150.0, 
+        decoration: BoxDecoration(
+        color: Colors.blue, 
+        borderRadius: BorderRadius.circular(20.0),
+        ),
+      );
+    case 1: //Dragged path
+      return Container(
+        width: 200.0, 
+        height: 150.0, 
+        decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 243, 33, 33), 
+        borderRadius: BorderRadius.circular(20.0),
+        ),
+      );
+    case 2: //Path starting location
+      return Container(
+        width: 200.0, 
+        height: 150.0, 
+        decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 151, 182, 207), 
+        borderRadius: BorderRadius.circular(20.0),
+        ),
+      );
+    default:
+      return const SizedBox(); //This will never be active lol
+  }
+}
+
+Widget _buildFolder(int state) {
+  switch(state){
+    case 0: //Idle path 
+      return Container(
+        width: 300.0, 
+        height: 150.0, 
+        decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 33, 243, 33), 
+        borderRadius: BorderRadius.circular(20.0),
+        ),
+      );
+    case 1: //Dragged path
+      return Container(
+        width: 300.0, 
+        height: 150.0, 
+        decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 243, 135, 33), 
+        borderRadius: BorderRadius.circular(20.0),
+        ),
+      );
+    case 2: //Path starting location
+      return Container(
+        width: 300.0, 
+        height: 150.0, 
+        decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 174, 0, 255), 
+        borderRadius: BorderRadius.circular(20.0),
+        ),
+      );
+    default:
+      return const SizedBox(); //This will never be active lol
+  }
 }

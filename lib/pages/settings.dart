@@ -212,7 +212,6 @@ class _SettingsPageState extends State<Settings> {
         elevation: 0,
       ),
       body: Center(
-
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 700), // Max width for content on desktop
           child: ListView(
