@@ -11,6 +11,9 @@ class Preview extends StatefulWidget {
 
 class _PreviewState extends State<Preview> {
   bool _showSidebar = false;
+  final List<Widget> _items = [];
+  int pathOrder = 0;
+  int folderOrder = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +88,66 @@ class _PreviewState extends State<Preview> {
     ),
   );
   }
+
+    Widget _buildDashboard() {
+    return Card(
+      color: const Color(0xFF2C2C2C),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(60)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: SearchBar(
+                    backgroundColor: const WidgetStatePropertyAll(Color(0xFF3C3C3C)),
+                    textStyle: const WidgetStatePropertyAll(TextStyle(color: Colors.white)),
+                    hintText: 'Search for a path',
+                    hintStyle: const WidgetStatePropertyAll(TextStyle(color: Colors.grey)),
+                    leading: const Icon(Icons.search, color: Colors.white),
+                    elevation: const WidgetStatePropertyAll(0),
+                  ),
+                ),
+                
+                Tooltip(
+                  message: 'Add folder',
+                  child: IconButton(
+                    icon: const Icon(Icons.folder_open_outlined, color: Colors.white, size: 40),
+                    onPressed: () {
+                      setState(() {
+                        _items.add(_buildDraggable(false));
+                      });
+                    },
+                  ),
+                ),
+
+                Tooltip(
+                  message: 'Add path',
+                  child: IconButton(
+                  icon: const Icon(Icons.add_circle_outlined, color: Colors.white, size: 40),
+                    onPressed: () {
+                      setState(() {
+                        _items.add(_buildDraggable(true));
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _items,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 Widget _buildSideBar(BuildContext context) {
@@ -126,41 +189,6 @@ Widget _buildSideBar(BuildContext context) {
   );
 }
 
-Widget _buildDashboard() {
-  return Card(
-    color: const Color(0xFF2C2C2C),
-    elevation: 4,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(60)),
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          SearchBar(
-            backgroundColor: WidgetStatePropertyAll(Color(0xFF3C3C3C)),
-            textStyle: WidgetStatePropertyAll(TextStyle(color: Colors.white)),
-            hintText: 'Search for a path',
-            hintStyle: WidgetStatePropertyAll(TextStyle(color: Colors.grey)),
-            leading: const Icon(Icons.search, color: Colors.white),
-            elevation: const WidgetStatePropertyAll(0),
-          ),
-          IconButton(
-            icon: const Icon(Icons.folder_open_outlined, color: Colors.white, size: 50),
-            onPressed: () {
-              _buildDraggable(false);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outlined, color: Colors.white, size: 50),
-            onPressed: () {
-              _buildDraggable(true);
-            },
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
 Widget _buildDraggable(bool isPath) {
   int idle = 0;
@@ -189,8 +217,11 @@ Widget _buildPath(int state) {
         width: 200.0, 
         height: 150.0, 
         decoration: BoxDecoration(
-        color: Colors.blue, 
+        color: const Color(0xFF3C3C3C), 
         borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: const Icon(
+          Icons.route, color: Colors.white, size: 40
         ),
       );
     case 1: //Dragged path
@@ -198,8 +229,11 @@ Widget _buildPath(int state) {
         width: 200.0, 
         height: 150.0, 
         decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 243, 33, 33), 
+        color: const Color.fromARGB(255, 60, 60, 60), 
         borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: const Icon(
+          Icons.route, color: Colors.white, size: 40
         ),
       );
     case 2: //Path starting location
@@ -209,6 +243,9 @@ Widget _buildPath(int state) {
         decoration: BoxDecoration(
         color: const Color.fromARGB(255, 151, 182, 207), 
         borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: const Icon(
+          Icons.route, color: Color.fromARGB(255, 37, 37, 37), size: 40
         ),
       );
     default:
@@ -220,16 +257,19 @@ Widget _buildFolder(int state) {
   switch(state){
     case 0: //Idle path 
       return Container(
-        width: 300.0, 
+        width: 590.0, 
         height: 150.0, 
         decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 33, 243, 33), 
+        color: const Color(0xFF3C3C3C), 
         borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: const Icon(
+          Icons.folder, color: Colors.white, size: 40
         ),
       );
     case 1: //Dragged path
       return Container(
-        width: 300.0, 
+        width: 590.0, 
         height: 150.0, 
         decoration: BoxDecoration(
         color: const Color.fromARGB(255, 243, 135, 33), 
@@ -238,7 +278,7 @@ Widget _buildFolder(int state) {
       );
     case 2: //Path starting location
       return Container(
-        width: 300.0, 
+        width: 590.0, 
         height: 150.0, 
         decoration: BoxDecoration(
         color: const Color.fromARGB(255, 174, 0, 255), 
