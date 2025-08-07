@@ -1,0 +1,15 @@
+{
+    "trajectories": [
+        {
+            "startPoint": {
+                "x": 7.5,
+                "y": 5.4
+            },
+
+            "endPoint": {
+                "x": 6,
+                "y": 5.4
+            }
+        }
+    ]
+}

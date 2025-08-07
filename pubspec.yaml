@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  path_provider: ^2.1.5
   provider: ^6.1.5
   shared_preferences: ^2.2.2
 
@@ -19,3 +20,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/reefscapeField.png
+    - assets/crescendoField.png
+    - assets/chargedupField.png
+    - assets/rapidreactsField.png
