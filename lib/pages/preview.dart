@@ -164,7 +164,7 @@ class _PreviewState extends State<Preview> {
       child: GestureDetector(
         onTap: () {
           Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const Editor()));
+          MaterialPageRoute(builder: (context) => Editor(pathName: path.name)));
         },
         child: Stack(
             children: [

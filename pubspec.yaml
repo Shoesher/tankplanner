@@ -26,3 +26,4 @@ flutter:
     - assets/crescendoField.png
     - assets/chargedupField.png
     - assets/rapidreactsField.png
+    - assets/paths/example.json

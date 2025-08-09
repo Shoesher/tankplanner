@@ -1,12 +1,16 @@
+import 'dart:convert' show jsonDecode;
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
 
 class Editor extends StatefulWidget {
-  const Editor({super.key});
+  final String pathName;
+  const Editor({super.key, required this.pathName});
 
   @override
-  State<Editor> createState() => _MainFieldState();
+  State<Editor> createState() => _MainFieldState(); 
 }
 
 class _MainFieldState extends State<Editor> {
@@ -295,8 +299,28 @@ class FieldPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void loadData(bool pathExists){
-    
+  //Exporting and importing path data
+  Future<bool> pathExists(String filePath) async {
+    final file = File(filePath);
+    return await file.exists();
+  }
+
+  Future<Map<String, dynamic>> decodeData(String jsonFile) async {
+    final Map<String, dynamic> data = jsonDecode(jsonFile);
+    return data;
+  }
+
+  Future<void> loadData(String path) async {
+    String filePath = 'assets/paths/$path.json';
+    String defaultPath = 'assets/paths/example.json';
+    if(await pathExists(filePath)){
+      decodeData(filePath);
+      
+    }
+    else{
+      decodeData(defaultPath);
+      
+    }
   }
 
   @override
