@@ -259,7 +259,7 @@ class FieldPainter extends CustomPainter {
     final scaleY = fieldRect.height / fieldHeightMeters;
 
     final pathPaint = Paint()
-      ..color = Colors.blueAccent
+      ..color = const Color.fromARGB(255, 255, 255, 255)
       ..strokeWidth = 3;
 
     Offset m2p(Offset m) => Offset(m.dx * scaleX, m.dy * scaleY);
@@ -268,7 +268,7 @@ class FieldPainter extends CustomPainter {
       canvas.drawLine(m2p(points[i]), m2p(points[i + 1]), pathPaint);
     }
 
-    final pointPaint = Paint()..color = Colors.redAccent;
+    final pointPaint = Paint()..color = const Color.fromARGB(255, 0, 255, 191);
     final anglePaint = Paint()
       ..color = Colors.greenAccent
       ..strokeWidth = 2;
@@ -292,8 +292,11 @@ class FieldPainter extends CustomPainter {
         label.paint(canvas, p + const Offset(8, -20));
       }
     }
-
     canvas.restore();
+  }
+
+  void loadData(bool pathExists){
+    
   }
 
   @override

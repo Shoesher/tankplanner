@@ -1,4 +1,14 @@
 {
+    "parameters": [
+        {
+            "velocities": {
+                "max": 5,
+                "min": 1,
+                "rot": 5
+            }
+        }
+    ],
+
     "trajectories": [
         {
             "startPoint": {
