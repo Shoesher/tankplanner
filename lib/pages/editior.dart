@@ -27,6 +27,7 @@ class _MainFieldState extends State<Editor> {
   void initState() {
     super.initState();
     _loadFieldImagePreference();
+    loadData(widget.pathName);
   }
 
   Future<void> _loadFieldImagePreference() async {
@@ -150,6 +151,65 @@ class _MainFieldState extends State<Editor> {
 
         );
       }
+
+  //Import and export Tankplanner data
+  Future<void> loadData(String path) async {
+    String filePath = 'assets/paths/$path.json';
+    String defaultPath = 'assets/paths/example.json';
+    String jsonString;
+
+    try {
+      final file = File(filePath);
+      if (await file.exists()) {
+        jsonString = await file.readAsString();
+      } else {
+        jsonString = await File(defaultPath).readAsString();
+      }
+    } catch (e) {
+      debugPrint('$e not found');
+      return;
+    }
+
+    // Decode JSON
+    final Map<String, dynamic> data = jsonDecode(jsonString);
+    points.clear();
+    angles.clear();
+
+    // Extract trajectories
+    if (data.containsKey('trajectories') && data['trajectories'] is List) {
+      final List trajectories = data['trajectories'];
+
+      for (var traj in trajectories) {
+        final start = traj['startPoint'];
+        final end = traj['endPoint'];
+
+        if (start != null && end != null) {
+          // Add start if not already last point
+          if (points.isEmpty ||
+              points.last.dx != start['x'] ||
+              points.last.dy != start['y']) {
+            points.add(Offset(
+              (start['x'] as num).toDouble(),
+              (start['y'] as num).toDouble(),
+            ));
+            angles.add(null); // placeholder for angle
+          }
+
+          // Add end
+          points.add(Offset(
+            (end['x'] as num).toDouble(),
+            (end['y'] as num).toDouble(),
+          ));
+          angles.add(null); // placeholder for angle
+        }
+      }
+    }
+    setState(() {}); // Redraw field with loaded data
+  }
+
+  Future<void> saveData()async {
+    
+  }
 
   Widget _buildSidebar(){
     return Container(
@@ -297,30 +357,6 @@ class FieldPainter extends CustomPainter {
       }
     }
     canvas.restore();
-  }
-
-  //Exporting and importing path data
-  Future<bool> pathExists(String filePath) async {
-    final file = File(filePath);
-    return await file.exists();
-  }
-
-  Future<Map<String, dynamic>> decodeData(String jsonFile) async {
-    final Map<String, dynamic> data = jsonDecode(jsonFile);
-    return data;
-  }
-
-  Future<void> loadData(String path) async {
-    String filePath = 'assets/paths/$path.json';
-    String defaultPath = 'assets/paths/example.json';
-    if(await pathExists(filePath)){
-      decodeData(filePath);
-      
-    }
-    else{
-      decodeData(defaultPath);
-      
-    }
   }
 
   @override
