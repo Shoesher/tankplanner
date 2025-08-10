@@ -1,9 +1,10 @@
-import 'dart:convert' show jsonDecode;
+import 'dart:convert' show jsonEncode, jsonDecode;
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:math';
+import 'package:path_provider/path_provider.dart';
 
 class Editor extends StatefulWidget {
   final String pathName;
@@ -82,75 +83,111 @@ class _MainFieldState extends State<Editor> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      appBar: AppBar(
-        title: const Text(
-          'Editor',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+    return WillPopScope(
+        onWillPop: () async {
+        final shouldLeave = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Save changes?'),
+            content: const Text(
+                'Do you want to save your changes before leaving the editor?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // stay
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  saveData(); // your existing save method
+                  Navigator.of(context).pop(true); // leave
+                },
+                child: const Text('Save & Exit'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true), // leave without saving
+                child: const Text('Discard'),
+              ),
+            ],
+          ),
+        );
+        return shouldLeave ?? false;
+      },
+
+      child: Scaffold(
+        backgroundColor: const Color(0xFF121212),
+        appBar: AppBar(
+          title: const Text(
+            'Editor',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+          ),
+          backgroundColor: const Color(0xFF0047B3),
         ),
-        backgroundColor: const Color(0xFF0047B3),
-      ),
-    body: LayoutBuilder(
-      builder: (context, constraints) {
-        final rect = _computeFieldRect(constraints.biggest);
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final rect = _computeFieldRect(constraints.biggest);
 
-        return Row(
-          children: [
-            // --- Canvas (field) ---
-            Expanded(
-              child: Center(
-                child: SizedBox(
-                  width: rect.width,
-                  height: rect.height,
-                  child: GestureDetector(
-                    onTapUp: (d) {
-                      final local = d.localPosition;
-                      final metersX = (local.dx / rect.width) * fieldWidthMeters;
-                      final metersY = (local.dy / rect.height) * fieldHeightMeters;
+            return Row(
+              children: [
+                // --- Canvas (field) ---
+                Expanded(
+                  child: Center(
+                    child: SizedBox(
+                      width: rect.width,
+                      height: rect.height,
+                      child: GestureDetector(
+                        onTapUp: (d) {
+                          final local = d.localPosition;
+                          final metersX = (local.dx / rect.width) * fieldWidthMeters;
+                          final metersY = (local.dy / rect.height) * fieldHeightMeters;
 
-                      setState(() {
-                        points.add(Offset(metersX, metersY));
-                        angles.add(null);
-                      });
-                    },
-                    child: Stack(
-                      children: [
-                        // Field Image
-                        Positioned.fill(
-                          child: Image.asset(
-                            fieldImage,
-                            fit: BoxFit.cover,
-                            filterQuality: FilterQuality.medium,
-                          ),
-                        ),
-                        // Painter
-                        Positioned.fill(
-                          child: CustomPaint(
-                            painter: FieldPainter(
-                              points: points,
-                              angles: angles,
-                              fieldWidthMeters: fieldWidthMeters,
-                              fieldHeightMeters: fieldHeightMeters,
-                              fieldRect: Rect.fromLTWH(0, 0, rect.width, rect.height), // local rect
+                          setState(() {
+                            points.add(Offset(metersX, metersY));
+                            angles.add(null);
+                          });
+                        },
+                        child: Stack(
+                          children: [
+                            // Field Image
+                            Positioned.fill(
+                              child: Image.asset(
+                                fieldImage,
+                                fit: BoxFit.cover,
+                                filterQuality: FilterQuality.medium,
+                              ),
                             ),
-                          ),
+                            // Painter
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: FieldPainter(
+                                  points: points,
+                                  angles: angles,
+                                  fieldWidthMeters: fieldWidthMeters,
+                                  fieldHeightMeters: fieldHeightMeters,
+                                  fieldRect: Rect.fromLTWH(0, 0, rect.width, rect.height), // local rect
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            //Sidebar
-            _buildSidebar()
-          ],
-        );
-      },
-    ),
+                //Sidebar
+                _buildSidebar()
+              ],
+            );
+          },
+        ),
+      ),
+    );
+    }
 
-        );
-      }
+  Future<File> _getJsonFile() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName = '${widget.pathName}.json';
+    return File('${directory.path}/$fileName');
+  }
 
   //Import and export Tankplanner data
   Future<void> loadData(String path) async {
@@ -159,15 +196,16 @@ class _MainFieldState extends State<Editor> {
     String jsonString;
 
     try {
-      final file = File(filePath);
-      if (await file.exists()) {
-        jsonString = await file.readAsString();
-      } else {
-        jsonString = await File(defaultPath).readAsString();
-      }
+      // Load from assets as a fallback
+      jsonString = await File(filePath).readAsString();
     } catch (e) {
-      debugPrint('$e not found');
-      return;
+      debugPrint('$e not found, loading default path.');
+      try {
+        jsonString = await File(defaultPath).readAsString();
+      } catch (e) {
+        debugPrint('Default path not found. Cannot load any data.');
+        return;
+      }
     }
 
     // Decode JSON
@@ -208,7 +246,47 @@ class _MainFieldState extends State<Editor> {
   }
 
   Future<void> saveData()async {
-    
+    try {
+      final file = await _getJsonFile();
+
+      // Create a list to hold the trajectory segments
+      final List<Map<String, dynamic>> trajectoryList = [];
+
+      // Iterate through points to create segments
+      for (int i = 0; i < points.length - 1; i++) {
+        trajectoryList.add({
+          'startPoint': {
+            'x': points[i].dx,
+            'y': points[i].dy,
+          },
+          'endPoint': {
+            'x': points[i + 1].dx,
+            'y': points[i + 1].dy,
+          },
+        });
+      }
+
+      // Create the final JSON structure
+      final Map<String, dynamic> data = {
+        'trajectories': trajectoryList,
+      };
+
+      // Encode the data to a JSON string
+      final jsonString = jsonEncode(data);
+
+      // Write the JSON string to the file
+      await file.writeAsString(jsonString);
+
+      // Show a success message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Trajectory saved to ${file.path}')),
+      );
+    } catch (e) {
+      // Show an error message if saving fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save trajectory: $e')),
+      );
+    }
   }
 
   Widget _buildSidebar(){
@@ -289,6 +367,16 @@ class _MainFieldState extends State<Editor> {
                       : null,
                   icon: const Icon(Icons.undo),
                   label: const Text('Undo'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: points.isNotEmpty ? saveData : null,
+                  icon: const Icon(Icons.save, color: Colors.greenAccent,),
+                  label: const Text('Save'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0047B3),
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
