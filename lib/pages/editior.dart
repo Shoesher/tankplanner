@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert' show jsonEncode, jsonDecode;
 import 'dart:io';
 import 'dart:math';
@@ -23,6 +25,8 @@ class _MainFieldState extends State<Editor> {
   final double fieldHeightMeters = 8.02;
 
   final double fieldScaleFactor = 0.9;
+  // ignore: prefer_typing_uninitialized_variables
+  late final filePath;
 
   @override
   void initState() {
@@ -183,7 +187,7 @@ class _MainFieldState extends State<Editor> {
     );
     }
 
-  Future<File> _getJsonFile() async {
+  Future<File> _getJsonFile() async{
     final directory = await getApplicationDocumentsDirectory();
     final fileName = '${widget.pathName}.json';
     return File('${directory.path}/$fileName');
@@ -191,16 +195,16 @@ class _MainFieldState extends State<Editor> {
 
   //Import and export Tankplanner data
   Future<void> loadData(String path) async {
-    String filePath = 'assets/paths/$path.json';
+    filePath = await _getJsonFile();
     String defaultPath = 'assets/paths/example.json';
     String jsonString;
 
     try {
-      // Load from assets as a fallback
-      jsonString = await File(filePath).readAsString();
+      jsonString = await filePath.readAsString();
     } catch (e) {
-      debugPrint('$e not found, loading default path.');
+      debugPrint('Loading default path.');
       try {
+        //TO DO: Make this check the assets folder version of the example.json
         jsonString = await File(defaultPath).readAsString();
       } catch (e) {
         debugPrint('Default path not found. Cannot load any data.');
@@ -247,7 +251,7 @@ class _MainFieldState extends State<Editor> {
 
   Future<void> saveData()async {
     try {
-      final file = await _getJsonFile();
+      //final file = _getJsonFile();
 
       // Create a list to hold the trajectory segments
       final List<Map<String, dynamic>> trajectoryList = [];
@@ -275,11 +279,11 @@ class _MainFieldState extends State<Editor> {
       final jsonString = jsonEncode(data);
 
       // Write the JSON string to the file
-      await file.writeAsString(jsonString);
+      await filePath.writeAsString(jsonString);
 
       // Show a success message to the user
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Trajectory saved to ${file.path}')),
+        SnackBar(content: Text('Trajectory saved to ${filePath.path}')),
       );
     } catch (e) {
       // Show an error message if saving fails
@@ -367,16 +371,6 @@ class _MainFieldState extends State<Editor> {
                       : null,
                   icon: const Icon(Icons.undo),
                   label: const Text('Undo'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: points.isNotEmpty ? saveData : null,
-                  icon: const Icon(Icons.save, color: Colors.greenAccent,),
-                  label: const Text('Save'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0047B3),
-                    foregroundColor: Colors.white,
-                  ),
                 ),
               ],
             ),
