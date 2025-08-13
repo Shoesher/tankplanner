@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:tankplanner/pages/editior.dart';
 import 'package:tankplanner/pages/settings.dart';
+
 
 class PathItem {
   String name;
@@ -25,6 +27,12 @@ class _PreviewState extends State<Preview> {
   bool _showSidebar = false;
   final List<PathItem> _paths = [];
   final List<FolderItem> _folders = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPaths();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +88,7 @@ class _PreviewState extends State<Preview> {
                 });
               },
               child: Container(
+                // ignore: deprecated_member_use
                 color: Colors.black.withOpacity(0.5),
               ),
             ),
@@ -93,6 +102,35 @@ class _PreviewState extends State<Preview> {
         ],
       ),
     );
+  }
+
+  void _loadNewPath(String fileName) async{
+    final String filepath = 'assets/paths/preview.json';
+    final File fileObj = File(filepath);
+    final jsonStr = await fileObj.readAsString();
+    final jsonData = json.decode(jsonStr);
+    final pathEntries = jsonData['paths'] as List<dynamic>;
+    final encoder = JsonEncoder.withIndent('  ');
+
+    //Add the path into the json file
+    pathEntries.add(fileName);
+    final jsonStrUpdated = encoder.convert(jsonData);
+    fileObj.writeAsString(jsonStrUpdated);
+  }
+
+  void _loadSavedPaths() async{
+    final String filepath = 'assets/paths/preview.json';
+    final File fileObj = File(filepath);
+    final jsonStr = await fileObj.readAsString();
+    final jsonData = json.decode(jsonStr);
+    final pathEntries = jsonData['paths'] as List<dynamic>;
+
+    //Create a widget of every path saved in the json file
+    for(final i in pathEntries){
+      setState(() {
+        _paths.add(PathItem(name: i));
+      });
+    }
   }
 
   Widget _buildDashboard() {
@@ -157,6 +195,7 @@ class _PreviewState extends State<Preview> {
   }
 
   Widget _buildPathWidget(PathItem path) {
+    _loadNewPath(path.name);
     return Draggable<PathItem>(
       data: path,
       feedback: _buildBox(Icons.route, Colors.grey.shade700),
@@ -196,10 +235,11 @@ class _PreviewState extends State<Preview> {
 
   Widget _buildFolderWidget(FolderItem folder) {
     return DragTarget<PathItem>(
-      onAccept: (path) {
+      onAcceptWithDetails: (path) {
         setState(() {
+          // ignore: collection_methods_unrelated_type
           _paths.remove(path);
-          folder.children = [...folder.children, path];
+          folder.children = [...folder.children,];
         });
       },
       builder: (context, candidateData, rejectedData) => Stack(

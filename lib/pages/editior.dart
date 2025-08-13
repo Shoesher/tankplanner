@@ -87,14 +87,16 @@ class _MainFieldState extends State<Editor> {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: deprecated_member_use
     return WillPopScope(
         onWillPop: () async {
         final shouldLeave = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Save changes?'),
+            backgroundColor: const Color.fromARGB(144, 0, 0, 0),
+            title: const Text('Save changes?', style: TextStyle(color: Colors.white),),
             content: const Text(
-                'Do you want to save your changes before leaving the editor?'),
+                'Do you want to save your changes before leaving the editor?', style: TextStyle(color: Colors.white),),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false), // stay
@@ -132,7 +134,7 @@ class _MainFieldState extends State<Editor> {
 
             return Row(
               children: [
-                // --- Canvas (field) ---
+                //Field
                 Expanded(
                   child: Center(
                     child: SizedBox(

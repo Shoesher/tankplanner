@@ -144,11 +144,13 @@ class _SettingsPageState extends State<Settings> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Enter Value ($unit)'),
+          title: Text('Enter Value ($unit)', style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color.fromARGB(144, 0, 0, 0),
           content: TextField(
             controller: settingsController[action],
+            style: TextStyle(color: Colors.white),
             decoration: const InputDecoration(
-              hintText: 'aifjiajf',
+              hintText: 'testing',
               border: OutlineInputBorder(),
             ),
           ),
@@ -251,6 +253,7 @@ class _SettingsPageState extends State<Settings> {
                         subtitle: Text('Current: $_selectedField', style: TextStyle(color: Colors.grey)),
                         trailing: DropdownButton<String>(
                           value: _selectedField,
+                          dropdownColor: Colors.black12,
                           onChanged: (String? newValue) {
                             if (newValue != null) {
                               setState(() {
@@ -288,6 +291,7 @@ class _SettingsPageState extends State<Settings> {
                       subtitle: Text('Current: $_selectedMotor', style: TextStyle(color: Colors.grey)),
                       trailing: DropdownButton<String>(
                         value: _selectedMotor,
+                        dropdownColor: Colors.black12,
                         onChanged: (String? newValue) {
                           if (newValue != null) {
                             setState(() {
