@@ -4,7 +4,7 @@
             "velocities": {
                 "max": 5,
                 "min": 1,
-                "rot": 5
+                "rotVel": 5
             }
         }
     ],
@@ -13,12 +13,14 @@
         {
             "startPoint": {
                 "x": 7.5,
-                "y": 7
+                "y": 7,
+                "rot": 0
             },
 
             "endPoint": {
                 "x": 6,
-                "y": 7
+                "y": 7,
+                "rot": 0
             }
         }
     ]

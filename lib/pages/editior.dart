@@ -13,7 +13,7 @@ class Editor extends StatefulWidget {
   const Editor({super.key, required this.pathName});
 
   @override
-  State<Editor> createState() => _MainFieldState(); 
+  State<Editor> createState() => _MainFieldState();
 }
 
 class _MainFieldState extends State<Editor> {
@@ -25,8 +25,7 @@ class _MainFieldState extends State<Editor> {
   final double fieldHeightMeters = 8.02;
 
   final double fieldScaleFactor = 0.9;
-  // ignore: prefer_typing_uninitialized_variables
-  late final filePath;
+  late final File filePath;
 
   @override
   void initState() {
@@ -59,7 +58,6 @@ class _MainFieldState extends State<Editor> {
 
   Rect _computeFieldRect(Size areaSize) {
     final aspect = fieldWidthMeters / fieldHeightMeters;
-    // max size that fits
     double w = areaSize.width;
     double h = w / aspect;
     if (h > areaSize.height) {
@@ -74,8 +72,6 @@ class _MainFieldState extends State<Editor> {
   }
 
   void _deleteTrajectoryAndFollowing(int trajectoryIndex) {
-    // trajectory i is the segment between points[i] and points[i+1]
-    // Deleting trajectory i means we keep points up to i, drop points from i+1 onward
     final keepPoints = trajectoryIndex + 1;
     setState(() {
       if (keepPoints >= 0 && keepPoints <= points.length) {
@@ -87,30 +83,34 @@ class _MainFieldState extends State<Editor> {
 
   @override
   Widget build(BuildContext context) {
-    // ignore: deprecated_member_use
     return WillPopScope(
-        onWillPop: () async {
+      onWillPop: () async {
         final shouldLeave = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: const Color.fromARGB(144, 0, 0, 0),
-            title: const Text('Save changes?', style: TextStyle(color: Colors.white),),
+            title: const Text(
+              'Save changes?',
+              style: TextStyle(color: Colors.white),
+            ),
             content: const Text(
-                'Do you want to save your changes before leaving the editor?', style: TextStyle(color: Colors.white),),
+              'Do you want to save your changes before leaving the editor?',
+              style: TextStyle(color: Colors.white),
+            ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // stay
+                onPressed: () => Navigator.of(context).pop(false),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
-                  saveData(); // your existing save method
-                  Navigator.of(context).pop(true); // leave
+                  saveData();
+                  Navigator.of(context).pop(true);
                 },
                 child: const Text('Save & Exit'),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(true), // leave without saving
+                onPressed: () => Navigator.of(context).pop(true),
                 child: const Text('Discard'),
               ),
             ],
@@ -118,13 +118,13 @@ class _MainFieldState extends State<Editor> {
         );
         return shouldLeave ?? false;
       },
-
       child: Scaffold(
         backgroundColor: const Color(0xFF121212),
         appBar: AppBar(
           title: const Text(
             'Editor',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28),
           ),
           backgroundColor: const Color(0xFF0047B3),
         ),
@@ -134,7 +134,6 @@ class _MainFieldState extends State<Editor> {
 
             return Row(
               children: [
-                //Field
                 Expanded(
                   child: Center(
                     child: SizedBox(
@@ -143,8 +142,10 @@ class _MainFieldState extends State<Editor> {
                       child: GestureDetector(
                         onTapUp: (d) {
                           final local = d.localPosition;
-                          final metersX = (local.dx / rect.width) * fieldWidthMeters;
-                          final metersY = (local.dy / rect.height) * fieldHeightMeters;
+                          final metersX =
+                              (local.dx / rect.width) * fieldWidthMeters;
+                          final metersY =
+                              (local.dy / rect.height) * fieldHeightMeters;
 
                           setState(() {
                             points.add(Offset(metersX, metersY));
@@ -153,7 +154,6 @@ class _MainFieldState extends State<Editor> {
                         },
                         child: Stack(
                           children: [
-                            // Field Image
                             Positioned.fill(
                               child: Image.asset(
                                 fieldImage,
@@ -161,7 +161,6 @@ class _MainFieldState extends State<Editor> {
                                 filterQuality: FilterQuality.medium,
                               ),
                             ),
-                            // Painter
                             Positioned.fill(
                               child: CustomPaint(
                                 painter: FieldPainter(
@@ -169,7 +168,8 @@ class _MainFieldState extends State<Editor> {
                                   angles: angles,
                                   fieldWidthMeters: fieldWidthMeters,
                                   fieldHeightMeters: fieldHeightMeters,
-                                  fieldRect: Rect.fromLTWH(0, 0, rect.width, rect.height), // local rect
+                                  fieldRect: Rect.fromLTWH(
+                                      0, 0, rect.width, rect.height),
                                 ),
                               ),
                             ),
@@ -179,23 +179,26 @@ class _MainFieldState extends State<Editor> {
                     ),
                   ),
                 ),
-                //Sidebar
-                _buildSidebar()
+                _buildSidebar(),
               ],
             );
           },
         ),
       ),
     );
-    }
-
-  Future<File> _getJsonFile() async{
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName = '${widget.pathName}.json';
-    return File('${directory.path}/$fileName');
   }
 
-  //Import and export Tankplanner data
+  /// Returns the JSON file path inside a dedicated TankPlannerPaths folder
+  Future<File> _getJsonFile() async {
+    final baseDir = await getApplicationSupportDirectory();
+    final appFolder = Directory('${baseDir.path}/TankPlannerPaths');
+    if (!await appFolder.exists()) {
+      await appFolder.create(recursive: true);
+    }
+    final fileName = '${widget.pathName}.json';
+    return File('${appFolder.path}/$fileName');
+  }
+
   Future<void> loadData(String path) async {
     filePath = await _getJsonFile();
     String defaultPath = 'assets/paths/example.json';
@@ -206,7 +209,6 @@ class _MainFieldState extends State<Editor> {
     } catch (e) {
       debugPrint('Loading default path.');
       try {
-        //TO DO: Make this check the assets folder version of the example.json
         jsonString = await File(defaultPath).readAsString();
       } catch (e) {
         debugPrint('Default path not found. Cannot load any data.');
@@ -214,21 +216,17 @@ class _MainFieldState extends State<Editor> {
       }
     }
 
-    // Decode JSON
     final Map<String, dynamic> data = jsonDecode(jsonString);
     points.clear();
     angles.clear();
 
-    // Extract trajectories
     if (data.containsKey('trajectories') && data['trajectories'] is List) {
       final List trajectories = data['trajectories'];
-
       for (var traj in trajectories) {
         final start = traj['startPoint'];
         final end = traj['endPoint'];
 
         if (start != null && end != null) {
-          // Add start if not already last point
           if (points.isEmpty ||
               points.last.dx != start['x'] ||
               points.last.dy != start['y']) {
@@ -236,29 +234,23 @@ class _MainFieldState extends State<Editor> {
               (start['x'] as num).toDouble(),
               (start['y'] as num).toDouble(),
             ));
-            angles.add(null); // placeholder for angle
+            angles.add(null);
           }
 
-          // Add end
           points.add(Offset(
             (end['x'] as num).toDouble(),
             (end['y'] as num).toDouble(),
           ));
-          angles.add(null); // placeholder for angle
+          angles.add(null);
         }
       }
     }
-    setState(() {}); // Redraw field with loaded data
+    setState(() {});
   }
 
-  Future<void> saveData()async {
+  Future<void> saveData() async {
     try {
-      //final file = _getJsonFile();
-
-      // Create a list to hold the trajectory segments
       final List<Map<String, dynamic>> trajectoryList = [];
-
-      // Iterate through points to create segments
       for (int i = 0; i < points.length - 1; i++) {
         trajectoryList.add({
           'startPoint': {
@@ -272,30 +264,24 @@ class _MainFieldState extends State<Editor> {
         });
       }
 
-      // Create the final JSON structure
       final Map<String, dynamic> data = {
         'trajectories': trajectoryList,
       };
 
-      // Encode the data to a JSON string
       final jsonString = jsonEncode(data);
-
-      // Write the JSON string to the file
       await filePath.writeAsString(jsonString);
 
-      // Show a success message to the user
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Trajectory saved to ${filePath.path}')),
+        SnackBar(content: Text('Path saved to ${filePath.path}')),
       );
     } catch (e) {
-      // Show an error message if saving fails
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save trajectory: $e')),
+        SnackBar(content: Text('Failed to save path: $e')),
       );
     }
   }
 
-  Widget _buildSidebar(){
+  Widget _buildSidebar() {
     return Container(
       width: 280,
       color: const Color(0xFF1E1E1E),
@@ -306,7 +292,10 @@ class _MainFieldState extends State<Editor> {
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
               'Trajectories',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
             ),
           ),
           const Divider(color: Colors.white24, height: 1),
@@ -321,14 +310,14 @@ class _MainFieldState extends State<Editor> {
                   )
                 : ListView.separated(
                     itemCount: max(0, points.length - 1),
-                    separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
+                    separatorBuilder: (_, __) =>
+                        const Divider(color: Colors.white12, height: 1),
                     itemBuilder: (context, i) {
                       final p1 = points[i];
                       final p2 = points[i + 1];
                       final dx = p2.dx - p1.dx;
                       final dy = p2.dy - p1.dy;
-                      final length = sqrt(dx * dx + dy * dy); // in meters
-                      //add rotation
+                      final length = sqrt(dx * dx + dy * dy);
 
                       return ListTile(
                         dense: true,
@@ -339,12 +328,16 @@ class _MainFieldState extends State<Editor> {
                         subtitle: Text(
                           'Δx=${dx.toStringAsFixed(2)} m, Δy=${dy.toStringAsFixed(2)} m, '
                           'L=${length.toStringAsFixed(2)} m',
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
                         ),
                         trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.redAccent),
-                          tooltip: 'Delete this and following segments',
-                          onPressed: () => _deleteTrajectoryAndFollowing(i),
+                          icon: const Icon(Icons.delete,
+                              color: Colors.redAccent),
+                          tooltip:
+                              'Delete this and following segments',
+                          onPressed: () =>
+                              _deleteTrajectoryAndFollowing(i),
                         ),
                       );
                     },
@@ -388,7 +381,7 @@ class FieldPainter extends CustomPainter {
   final List<double?> angles;
   final double fieldWidthMeters;
   final double fieldHeightMeters;
-  final Rect fieldRect; 
+  final Rect fieldRect;
 
   FieldPainter({
     required this.points,
@@ -416,7 +409,8 @@ class FieldPainter extends CustomPainter {
       canvas.drawLine(m2p(points[i]), m2p(points[i + 1]), pathPaint);
     }
 
-    final pointPaint = Paint()..color = const Color.fromARGB(255, 0, 255, 191);
+    final pointPaint =
+        Paint()..color = const Color.fromARGB(255, 0, 255, 191);
     final anglePaint = Paint()
       ..color = Colors.greenAccent
       ..strokeWidth = 2;
@@ -433,7 +427,10 @@ class FieldPainter extends CustomPainter {
         canvas.drawLine(p, end, anglePaint);
 
         final label = TextPainter(
-          text: TextSpan(text: '${a.toStringAsFixed(0)}°', style: const TextStyle(color: Colors.white, fontSize: 12)),
+          text: TextSpan(
+              text: '${a.toStringAsFixed(0)}°',
+              style:
+                  const TextStyle(color: Colors.white, fontSize: 12)),
           textDirection: TextDirection.ltr,
         );
         label.layout();
@@ -445,5 +442,7 @@ class FieldPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(FieldPainter old) =>
-      old.points != points || old.angles != angles || old.fieldRect != fieldRect;
+      old.points != points ||
+      old.angles != angles ||
+      old.fieldRect != fieldRect;
 }
