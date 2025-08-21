@@ -81,6 +81,15 @@ class _MainFieldState extends State<Editor> {
     });
   }
 
+  /// Compute field-relative angle in degrees from point A to point B
+  double computeAngleDegrees(Offset from, Offset to) {
+    final dx = to.dx - from.dx;
+    final dy = to.dy - from.dy;
+    final radians = atan2(dy, dx);
+    final degrees = radians * 180 / pi;
+    return (degrees + 360) % 360; // normalize 0–360
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -140,18 +149,28 @@ class _MainFieldState extends State<Editor> {
                       width: rect.width,
                       height: rect.height,
                       child: GestureDetector(
-                        onTapUp: (d) {
-                          final local = d.localPosition;
-                          final metersX =
-                              (local.dx / rect.width) * fieldWidthMeters;
-                          final metersY =
-                              (local.dy / rect.height) * fieldHeightMeters;
+                      onTapUp: (d) {
+                        final local = d.localPosition;
+                        final metersX = (local.dx / rect.width) * fieldWidthMeters;
+                        final metersY = (local.dy / rect.height) * fieldHeightMeters;
+                        final newPoint = Offset(metersX, metersY);
 
-                          setState(() {
-                            points.add(Offset(metersX, metersY));
-                            angles.add(null);
-                          });
-                        },
+                        setState(() {
+                          points.add(newPoint);
+
+                          if (points.length > 1) {
+                            // compute angle of the new segment
+                            final angle = computeAngleDegrees(points[points.length - 2], newPoint);
+                            // update the previous point’s angle
+                            angles[points.length - 2] = angle;
+                            // assign the same angle to the new point
+                            angles.add(angle);
+                          } else {
+                            // first point, no segment yet
+                            angles.add(0);
+                          }
+                        });
+                      },
                         child: Stack(
                           children: [
                             Positioned.fill(
@@ -188,14 +207,13 @@ class _MainFieldState extends State<Editor> {
     );
   }
 
-  /// Returns the JSON file path inside a dedicated TankPlannerPaths folder
-  Future<File> _getJsonFile() async {
+  Future<File> _getJsonFile([String? specPath]) async {
     final baseDir = await getApplicationSupportDirectory();
     final appFolder = Directory('${baseDir.path}/TankPlannerPaths');
     if (!await appFolder.exists()) {
       await appFolder.create(recursive: true);
     }
-    final fileName = '${widget.pathName}.json';
+    final fileName = (specPath != null) ? '$specPath.json' : '${widget.pathName}.json';
     return File('${appFolder.path}/$fileName');
   }
 
@@ -230,18 +248,32 @@ class _MainFieldState extends State<Editor> {
           if (points.isEmpty ||
               points.last.dx != start['x'] ||
               points.last.dy != start['y']) {
-            points.add(Offset(
+            final startPoint = Offset(
               (start['x'] as num).toDouble(),
               (start['y'] as num).toDouble(),
-            ));
-            angles.add(null);
+            );
+            points.add(startPoint);
+
+            if (start['rot'] != null) {
+              angles.add((start['rot'] as num).toDouble());
+            } else {
+              angles.add(0); // no prior angle, set default
+            }
           }
 
-          points.add(Offset(
+          final endPoint = Offset(
             (end['x'] as num).toDouble(),
             (end['y'] as num).toDouble(),
-          ));
-          angles.add(null);
+          );
+          points.add(endPoint);
+
+          if (end['rot'] != null) {
+            angles.add((end['rot'] as num).toDouble());
+          } else {
+            final angle =
+                computeAngleDegrees(points[points.length - 2], endPoint);
+            angles.add(angle);
+          }
         }
       }
     }
@@ -256,10 +288,12 @@ class _MainFieldState extends State<Editor> {
           'startPoint': {
             'x': points[i].dx,
             'y': points[i].dy,
+            'rot': angles[i] ?? 0,
           },
           'endPoint': {
             'x': points[i + 1].dx,
             'y': points[i + 1].dy,
+            'rot': angles[i + 1] ?? 0,
           },
         });
       }
@@ -327,7 +361,8 @@ class _MainFieldState extends State<Editor> {
                         ),
                         subtitle: Text(
                           'Δx=${dx.toStringAsFixed(2)} m, Δy=${dy.toStringAsFixed(2)} m, '
-                          'L=${length.toStringAsFixed(2)} m',
+                          'L=${length.toStringAsFixed(2)} m, '
+                          'θ=${angles[i + 1]?.toStringAsFixed(1) ?? "?"}°',
                           style: const TextStyle(
                               color: Colors.white70, fontSize: 12),
                         ),
@@ -445,4 +480,62 @@ class FieldPainter extends CustomPainter {
       old.points != points ||
       old.angles != angles ||
       old.fieldRect != fieldRect;
+}
+
+class FileManager {
+
+  Future<void> folderFailSafe(final folder) async{
+    if (!await folder.exists()) {
+      await folder.create(recursive: true);
+    }
+  }
+
+  Future<File> getSpecJsonFile([String? specPath]) async {
+    final baseDir = await getApplicationSupportDirectory();
+    final appFolder = Directory('${baseDir.path}/TankPlannerPaths');
+    folderFailSafe(appFolder);
+    final fileName = '$specPath.json';
+    return File('${appFolder.path}/$fileName');
+  }
+
+  Future<List<String>> loadFromDir() async{
+    final baseDir = await getApplicationSupportDirectory();
+    final appFolder = Directory('${baseDir.path}/TankPlannerPaths');
+    folderFailSafe(appFolder);
+    final folderContents = appFolder.listSync();
+
+    final pathList = folderContents.whereType<File>()   
+      .map((f) {
+        final fileName = f.uri.pathSegments.last;    
+        return fileName.replaceAll('.json', '');     
+      })
+      .toList();
+    return pathList;
+  }
+
+  Future<void> saveToDir(String pathName, BuildContext context) async {
+    final String defaultPath = 'assets/paths/example.json';
+    final File referencePath = File(defaultPath);
+    final createdFile = await getSpecJsonFile(pathName);
+    await referencePath.exists() ? referencePath.copy(createdFile.path) : ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to reference: $referencePath')),
+    );
+  }
+
+  Future<void> renamePathFile(String prevName, String newName, BuildContext context) async{
+    final oldFile = await getSpecJsonFile(prevName);
+    final newFile = await getSpecJsonFile(newName);
+    await oldFile.exists() ? oldFile.copy(newFile.path) : ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to rename path: $oldFile')),
+      );
+    deletePathFile(prevName, context);
+  }
+
+  Future<void> deletePathFile(String delFile, BuildContext context) async {
+    File toBeDeleted = await getSpecJsonFile(delFile);
+    await toBeDeleted.exists() ? toBeDeleted.delete() : 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete path: $toBeDeleted')),
+      );
+  }
 }

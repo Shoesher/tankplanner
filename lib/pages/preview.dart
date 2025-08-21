@@ -1,7 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:tankplanner/pages/editior.dart';
 import 'package:tankplanner/pages/settings.dart';
 
@@ -27,6 +28,7 @@ class _PreviewState extends State<Preview> {
   bool _showSidebar = false;
   final List<PathItem> _paths = [];
   final List<FolderItem> _folders = [];
+  final FileManager fileM = FileManager();
 
   @override
   void initState() {
@@ -104,29 +106,11 @@ class _PreviewState extends State<Preview> {
     );
   }
 
-  void _loadNewPath(String fileName) async{
-    final String filepath = 'assets/paths/preview.json';
-    final File fileObj = File(filepath);
-    final jsonStr = await fileObj.readAsString();
-    final jsonData = json.decode(jsonStr);
-    final pathEntries = jsonData['paths'] as List<dynamic>;
-    final encoder = JsonEncoder.withIndent('  ');
-
-    //Add the path into the json file
-    pathEntries.add(fileName);
-    final jsonStrUpdated = encoder.convert(jsonData);
-    fileObj.writeAsString(jsonStrUpdated);
-  }
-
   void _loadSavedPaths() async{
-    final String filepath = 'assets/paths/preview.json';
-    final File fileObj = File(filepath);
-    final jsonStr = await fileObj.readAsString();
-    final jsonData = json.decode(jsonStr);
-    final pathEntries = jsonData['paths'] as List<dynamic>;
+    final pathEntries = await fileM.loadFromDir();
 
     //Create a widget of every path saved in the json file
-    for(final i in pathEntries){
+    for(var i in pathEntries){
       setState(() {
         _paths.add(PathItem(name: i));
       });
@@ -195,7 +179,8 @@ class _PreviewState extends State<Preview> {
   }
 
   Widget _buildPathWidget(PathItem path) {
-    _loadNewPath(path.name);
+    fileM.saveToDir(path.name, context);
+
     return Draggable<PathItem>(
       data: path,
       feedback: _buildBox(Icons.route, Colors.grey.shade700),
@@ -218,7 +203,7 @@ class _PreviewState extends State<Preview> {
                   itemBuilder: (context) => [
                     PopupMenuItem(
                       child: const Text('Rename', style: TextStyle(color: Colors.white)),
-                      onTap: () => _renamePath(path),
+                      onTap: () => _renamePath(path), 
                     ),
                     PopupMenuItem(
                       child: const Text('Delete', style: TextStyle(color: Colors.white)),
@@ -321,6 +306,7 @@ class _PreviewState extends State<Preview> {
     setState(() {
       _folders.remove(folder);
     });
+
   }
 
   void _renamePath(PathItem path) async {
@@ -339,9 +325,12 @@ class _PreviewState extends State<Preview> {
       ),
     );
     if (name != null && name.trim().isNotEmpty) {
+      String ogPathName = path.name;
       setState(() {
         path.name = name.trim();
       });
+      String renamedPath = path.name;
+      fileM.renamePathFile(ogPathName, renamedPath, context);
     }
   }
 
@@ -349,6 +338,7 @@ class _PreviewState extends State<Preview> {
     setState(() {
       _paths.remove(path);
     });
+    fileM.deletePathFile(path.name, context);
   }
 
   Widget _buildSideBar(BuildContext context) {
